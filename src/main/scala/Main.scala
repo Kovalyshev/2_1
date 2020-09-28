@@ -23,6 +23,8 @@ object Main {
 
     val userRouter = new UserRouter(userService)
 
+    val route = greetRouter.route ~ userRouter.route
+
     val binding = Http().newServerAt("localhost", 8080).bind(route)
 
     binding.foreach(b => println(s"Binding on ${b.localAddress}"))

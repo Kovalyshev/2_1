@@ -1,3 +1,3 @@
 package ru.otus.sc.greet.model
 
-case class GreetRequest(name: String, isHuman: Boolean = true)
+case class GreetRequest(name: String, isHuman: Boolean = true, age: Int = 18)
