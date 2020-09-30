@@ -6,6 +6,8 @@ case class GetUserRequest(userId: UUID)
 
 sealed trait GetUserResponse
 object GetUserResponse {
-  case class Found(user: User)      extends GetUserResponse
-  case class NotFound(userId: UUID) extends GetUserResponse
+  case class Found(user: StrictUser) extends GetUserResponse
+  case class NotFound(userId: UUID)  extends GetUserResponse
 }
+
+case class GetAllUsersResponse(users: List[StrictUser])

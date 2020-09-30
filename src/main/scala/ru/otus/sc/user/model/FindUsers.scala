@@ -7,5 +7,5 @@ object FindUsersRequest {
 
 sealed trait FindUsersResponse
 object FindUsersResponse {
-  case class Result(users: Seq[User]) extends FindUsersResponse
+  case class Result(users: Seq[StrictUser]) extends FindUsersResponse
 }

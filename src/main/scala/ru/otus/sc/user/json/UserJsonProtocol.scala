@@ -2,10 +2,11 @@ package ru.otus.sc.user.json
 
 import play.api.libs.json.{Format, Json, OFormat}
 import ru.otus.sc.json.AdtProtocol
-import ru.otus.sc.user.model.{Role, UpdateUserResponse, User}
+import ru.otus.sc.user.model.{Role, StrictUser, UpdateUser, UpdateUserResponse}
 
 trait UserJsonProtocol extends AdtProtocol {
-  implicit lazy val userFormat: OFormat[User] = Json.format
+  implicit lazy val userFormat: OFormat[StrictUser]       = Json.format
+  implicit lazy val userUpdateFormat: OFormat[UpdateUser] = Json.format
 
   implicit lazy val roleFormat: OFormat[Role] = {
     implicit val readerFormat: OFormat[Role.Reader.type]   = objectFormat(Role.Reader)

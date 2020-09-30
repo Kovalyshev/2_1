@@ -6,7 +6,7 @@ import org.scalacheck.Arbitrary._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import ru.otus.sc.user.model.{Role, User}
+import ru.otus.sc.user.model.{Role, StrictUser}
 import org.scalatest.matchers.should.Matchers._
 
 /**
@@ -18,20 +18,26 @@ abstract class UserDaoTest(name: String, createDao: () => UserDao)
   implicit val genRole: Gen[Role]             = Gen.oneOf(Role.Admin, Role.Manager, Role.Reader)
   implicit val arbitraryRole: Arbitrary[Role] = Arbitrary(genRole)
 
-  implicit val genUser: Gen[User] = for {
+  implicit val genUser: Gen[StrictUser] = for {
     id        <- Gen.option(Gen.uuid)
     firstName <- arbitrary[String]
     lastName  <- arbitrary[String]
     age       <- arbitrary[Int]
     roles     <- arbitrary[Seq[Role]]
-  } yield User(id = id, firstName = firstName, lastName = lastName, age = age, roles = roles.toSet)
+  } yield StrictUser(
+    id = id,
+    firstName = firstName,
+    lastName = lastName,
+    age = age,
+    roles = roles.toSet
+  )
 
-  implicit val arbitraryUser: Arbitrary[User] = Arbitrary(genUser)
+  implicit val arbitraryUser: Arbitrary[StrictUser] = Arbitrary(genUser)
 
   name - {
     "createUser" - {
       "create any number of users" in {
-        forAll { (users: Seq[User], user: User) =>
+        forAll { (users: Seq[StrictUser], user: StrictUser) =>
           val dao = createDao()
           users.foreach(dao.createUser)
 
@@ -46,7 +52,7 @@ abstract class UserDaoTest(name: String, createDao: () => UserDao)
 
     "getUser" - {
       "get unknown user" in {
-        forAll { (users: Seq[User], userId: UUID) =>
+        forAll { (users: Seq[StrictUser], userId: UUID) =>
           val dao = createDao()
           users.foreach(dao.createUser)
 
@@ -55,7 +61,7 @@ abstract class UserDaoTest(name: String, createDao: () => UserDao)
       }
 
       "get known user" in {
-        forAll { (users1: Seq[User], user: User, users2: Seq[User]) =>
+        forAll { (users1: Seq[StrictUser], user: StrictUser, users2: Seq[StrictUser]) =>
           val dao = createDao()
           users1.foreach(dao.createUser)
           val createdUser = dao.createUser(user)
@@ -68,7 +74,7 @@ abstract class UserDaoTest(name: String, createDao: () => UserDao)
 
     "updateUser" - {
       "update unknown user - keep all users the same" in {
-        forAll { (users: Seq[User], user: User) =>
+        forAll { (users: Seq[StrictUser], user: StrictUser) =>
           val dao          = createDao()
           val createdUsers = users.map(dao.createUser)
 
@@ -81,30 +87,36 @@ abstract class UserDaoTest(name: String, createDao: () => UserDao)
       }
 
       "update known user - keep other users the same" in {
-        forAll { (users1: Seq[User], user1: User, user2: User, users2: Seq[User]) =>
-          val dao           = createDao()
-          val createdUsers1 = users1.map(dao.createUser)
-          val createdUser   = dao.createUser(user1)
-          val createdUsers2 = users2.map(dao.createUser)
+        forAll {
+          (
+              users1: Seq[StrictUser],
+              user1: StrictUser,
+              user2: StrictUser,
+              users2: Seq[StrictUser]
+          ) =>
+            val dao           = createDao()
+            val createdUsers1 = users1.map(dao.createUser)
+            val createdUser   = dao.createUser(user1)
+            val createdUsers2 = users2.map(dao.createUser)
 
-          val toUpdate = user2.copy(id = createdUser.id)
-          dao.updateUser(toUpdate) shouldBe Some(toUpdate)
-          dao.getUser(toUpdate.id.get) shouldBe Some(toUpdate)
+            val toUpdate = user2.copy(id = createdUser.id)
+            dao.updateUser(toUpdate) shouldBe Some(toUpdate)
+            dao.getUser(toUpdate.id.get) shouldBe Some(toUpdate)
 
-          createdUsers1.foreach { u =>
-            dao.getUser(u.id.get) shouldBe Some(u)
-          }
+            createdUsers1.foreach { u =>
+              dao.getUser(u.id.get) shouldBe Some(u)
+            }
 
-          createdUsers2.foreach { u =>
-            dao.getUser(u.id.get) shouldBe Some(u)
-          }
+            createdUsers2.foreach { u =>
+              dao.getUser(u.id.get) shouldBe Some(u)
+            }
         }
       }
     }
 
     "deleteUser" - {
       "delete unknown user - keep all users the same" in {
-        forAll { (users: Seq[User], userId: UUID) =>
+        forAll { (users: Seq[StrictUser], userId: UUID) =>
           val dao          = createDao()
           val createdUsers = users.map(dao.createUser)
 
@@ -117,7 +129,7 @@ abstract class UserDaoTest(name: String, createDao: () => UserDao)
       }
 
       "delete known user - keep other users the same" in {
-        forAll { (users1: Seq[User], user1: User, users2: Seq[User]) =>
+        forAll { (users1: Seq[StrictUser], user1: StrictUser, users2: Seq[StrictUser]) =>
           val dao           = createDao()
           val createdUsers1 = users1.map(dao.createUser)
           val createdUser   = dao.createUser(user1)
@@ -140,7 +152,7 @@ abstract class UserDaoTest(name: String, createDao: () => UserDao)
     }
 
     "findByLastName" in {
-      forAll { (users1: Seq[User], lastName: String, users2: Seq[User]) =>
+      forAll { (users1: Seq[StrictUser], lastName: String, users2: Seq[StrictUser]) =>
         val dao               = createDao()
         val withOtherLastName = users1.filterNot(_.lastName == lastName)
         val withLastName      = users2.map(_.copy(lastName = lastName))
@@ -153,7 +165,7 @@ abstract class UserDaoTest(name: String, createDao: () => UserDao)
     }
 
     "findAll" in {
-      forAll { users: Seq[User] =>
+      forAll { users: Seq[StrictUser] =>
         val dao          = createDao()
         val createdUsers = users.map(dao.createUser)
 

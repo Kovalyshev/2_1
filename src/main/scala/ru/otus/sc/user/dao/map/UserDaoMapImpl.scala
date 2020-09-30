@@ -3,21 +3,21 @@ package ru.otus.sc.user.dao.map
 import java.util.UUID
 
 import ru.otus.sc.user.dao.UserDao
-import ru.otus.sc.user.model.User
+import ru.otus.sc.user.model.{StrictUser, UpdateUser}
 
 class UserDaoMapImpl extends UserDao {
-  private var users: Map[UUID, User] = Map.empty
+  private var users: Map[UUID, StrictUser] = Map.empty
 
-  def createUser(user: User): User = {
+  def createUser(user: StrictUser): StrictUser = {
     val id         = UUID.randomUUID()
     val userWithId = user.copy(id = Some(id))
     users += (id -> userWithId)
     userWithId
   }
 
-  def getUser(userId: UUID): Option[User] = users.get(userId)
+  def getUser(userId: UUID): Option[StrictUser] = users.get(userId)
 
-  def updateUser(user: User): Option[User] =
+  def updateUser(user: StrictUser): Option[StrictUser] =
     for {
       id <- user.id
       _  <- users.get(id)
@@ -26,7 +26,17 @@ class UserDaoMapImpl extends UserDao {
       user
     }
 
-  def deleteUser(userId: UUID): Option[User] =
+  def updateUserUpd(user: UpdateUser): Option[StrictUser] =
+    for {
+      id  <- user.id
+      old <- users.get(id)
+      upd = old.withUpdate(user)
+    } yield {
+      users += (id -> upd)
+      upd
+    }
+
+  def deleteUser(userId: UUID): Option[StrictUser] =
     users.get(userId) match {
       case Some(user) =>
         users -= userId
@@ -34,8 +44,8 @@ class UserDaoMapImpl extends UserDao {
       case None => None
     }
 
-  def findByLastName(lastName: String): Seq[User] =
+  def findByLastName(lastName: String): Seq[StrictUser] =
     users.values.filter(_.lastName == lastName).toVector
 
-  def findAll(): Seq[User] = users.values.toVector
+  def findAll(): Seq[StrictUser] = users.values.toVector
 }

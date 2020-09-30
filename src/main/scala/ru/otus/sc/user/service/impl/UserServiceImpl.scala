@@ -8,6 +8,7 @@ import ru.otus.sc.user.model.{
   DeleteUserResponse,
   FindUsersRequest,
   FindUsersResponse,
+  GetAllUsersResponse,
   GetUserRequest,
   GetUserResponse,
   UpdateUserRequest,
@@ -25,15 +26,26 @@ class UserServiceImpl(dao: UserDao) extends UserService {
       case None       => GetUserResponse.NotFound(request.userId)
     }
 
-  def updateUser(request: UpdateUserRequest): UpdateUserResponse =
+  def getAllUsers(): GetAllUsersResponse = {
+    GetAllUsersResponse(
+      dao
+        .findAll()
+        .toList
+    )
+  }
+
+  def updateUser(request: UpdateUserRequest): UpdateUserResponse = {
+    println(request)
     request.user.id match {
       case None => UpdateUserResponse.CantUpdateUserWithoutId
       case Some(userId) =>
-        dao.updateUser(request.user) match {
+        println(dao.getUser(request.user.id.get))
+        dao.updateUserUpd(request.user) match {
           case Some(user) => UpdateUserResponse.Updated(user)
           case None       => UpdateUserResponse.NotFound(userId)
         }
     }
+  }
 
   def deleteUser(request: DeleteUserRequest): DeleteUserResponse =
     dao
